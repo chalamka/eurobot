@@ -1,36 +1,55 @@
-__author__ = 'ledif'
-
 import time
 import praw
+import praw.helpers
+import logging
+import json
 
-pswd = None
-r = praw.Reddit('eurobots')
-r.login('s-moresModBot',pswd) 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.INFO)
 
-already_checked = []
-already_commented = set()
+HISTORY_FILE = "history.json"
 
-keyWords = ["jap"]
 
-def findWords(comment, keyWords):
-    print("in find words function")
-    for keys in keyWords:
-        if keys in temp and comment.id not in already_commented:
-            print("Leaving a comment!")
-            #comment.reply("Keep it respectful, please")
-            already_commented.add(comment.id)
+def load_commented(filename):
+    try:
+        with open(filename) as fp:
+            return json.load(fp)
+    except IOError:
+        return []
+
+
+def write_commented(filename, already_commented):
+    with open(filename, 'w') as fp:
+        return json.dump(already_commented, fp)
+
+
+def find_words(comment, key_words, already_commented):
+    for keys in key_words:
+        if keys in comment.body.lower() and comment.id not in already_commented:
+            logger.info("Replying to %s" % comment.id)
+            comment.reply("Keep it respectful, please")
+            already_commented.append(comment.id)
             time.sleep(2)
 
-while True:
-    subreddit = r.get_subreddit('wotcirclejerk')
-    all_comments = []
-    for submission in subreddit.get_top_from_week():
-        all_comments.append(praw.helpers.flatten_tree(submission.comments))
-    print("checking for comment")
-    for comment in all_comments:
-        temp = comment.comment.body.lower()
-        findWords(temp, keyWords)
-    time.sleep(600)
 
+def main():
+    r = praw.Reddit('eurobots')
+    r.login('s-moresModBot')
+    key_words = ["jap"]
+    already_commented = load_commented(HISTORY_FILE)
 
+    try:
+        while True:
+            subreddit = r.get_subreddit('wotcirclejerk')
+            for submission in subreddit.get_top_from_month():
+                comments = praw.helpers.flatten_tree(submission.comments)
+                logger.info("Scanning %d comments in submission %s" % (len(comments), submission.url))
+                for comment in comments:
+                    find_words(comment, key_words, already_commented)
+            time.sleep(600)
+    except KeyboardInterrupt:
+        write_commented(HISTORY_FILE, already_commented)
 
+if __name__ == '__main__':
+    main()
