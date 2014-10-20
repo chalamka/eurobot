@@ -16,7 +16,7 @@ CONFIG_FILE = "config.json"
 def load_config(filename):
     try:
         with open(filename) as fp:
-            return json.load(fp, object_hook=dict)
+            return json.load(fp)
     except IOError:
         logger.info("Failed to load configuration file")
         #exits program with code 2
@@ -40,7 +40,7 @@ def find_words(comment, key_words, already_commented):
     for keys in key_words:
         if keys in comment.body.lower() and comment.id not in already_commented:
             logger.info("Replying to %s" % comment.id)
-            #comment.reply("Keep it respectful, please")
+            comment.reply("Keep it respectful, please")
             already_commented.append(comment.id)
             time.sleep(5)
 
