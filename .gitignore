@@ -54,3 +54,4 @@ docs/_build/
 target/
 .idea/
 history.json
+config.json
