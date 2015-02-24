@@ -19,8 +19,8 @@ def load_config(filename):
             return json.load(fp)
     except IOError:
         logger.info("Failed to load configuration file")
-        #exits program with code 2
-        sys.exit(2)
+        #exits program with code 1
+        sys.exit(1)
 
 
 def load_commented(filename):
